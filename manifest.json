@@ -1,0 +1,19 @@
+{
+  "name": "Editor Hinos — 16:9 e 9:16",
+  "short_name": "Editor Hinos",
+  "description": "Editor único: vídeo horizontal 16:9 (tablatura + violão) ou vertical 9:16 (fundo desfocado, título e CTAs), 100% no navegador.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "pt-BR",
+  "background_color": "#0f111a",
+  "theme_color": "#0f111a",
+  "categories": ["multimedia", "music", "video"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

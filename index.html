@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Editor Hinos — 16:9 e 9:16</title>
+  <meta name="description" content="Editor único: vídeo horizontal 16:9 (tablatura + violão) ou vertical 9:16 (fundo desfocado, título e CTAs) — 100% no navegador." />
+  <meta name="theme-color" content="#0f111a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="icon-192.png" alt="" width="36" height="36" />
+      <div>
+        <h1>Editor Hinos</h1>
+        <p>16:9 e 9:16 · 100% local</p>
+      </div>
+    </div>
+    <button id="btnInstall" class="btn btn-install" hidden>⬇ Instalar App (PWA)</button>
+  </header>
+
+  <div class="mode-switch" role="group" aria-label="Formato do vídeo">
+    <button class="mode-btn" data-mode="16:9" aria-pressed="false"><b>16:9 · Violão</b><small>Tablatura + braço, para o YouTube</small></button>
+    <button class="mode-btn" data-mode="9:16" aria-pressed="true"><b>9:16 · Vertical</b><small>Hinos, para TikTok/Reels/Shorts</small></button>
+  </div>
+
+  <main class="container">
+    <div id="iosHint" class="notice" hidden>
+      No iPhone/iPad: toque em <strong>Compartilhar</strong> e depois em <strong>Adicionar à Tela de Início</strong> para instalar.
+    </div>
+
+    <!-- 1. UPLOAD + TÍTULO -->
+    <section class="card">
+      <h2><span class="num">1</span> Vídeo bruto e título</h2>
+      <label id="dropzone" class="dropzone" tabindex="0">
+        <input id="fileInput" type="file" accept="video/*" hidden />
+        <div class="dz-icon">🎬</div>
+        <p class="dz-title">Arraste o vídeo aqui ou toque para escolher</p>
+        <p class="dz-sub">Gravação de tela do app (partitura/tablatura em cima, instrumento embaixo). Nada sai do seu aparelho.</p>
+        <p id="fileInfo" class="dz-file"></p>
+      </label>
+      <div class="fields">
+        <label class="field">Número do hino
+          <input id="inpHino" type="text" inputmode="numeric" maxlength="14" placeholder="27" />
+        </label>
+        <label class="field">Instrumento
+          <input id="inpInstr" type="text" list="dlInstr" maxlength="28" placeholder="Ukulele" />
+        </label>
+      </div>
+      <datalist id="dlInstr">
+        <option value="Ukulele"></option><option value="Violão"></option><option value="Viola Caipira"></option>
+        <option value="Saxofone Alto"></option><option value="Saxofone Tenor"></option><option value="Clarinete"></option>
+        <option value="Trompete"></option><option value="Trombone"></option><option value="Tuba"></option>
+        <option value="Gaita"></option><option value="Flauta"></option><option value="Violino"></option>
+        <option value="Teclado"></option><option value="Piano"></option>
+      </datalist>
+      <p class="hint" style="margin-top:8px">Usados no título ("Hino 27 / Ukulele") quando o título está ligado na seção 3.</p>
+    </section>
+
+    <!-- 2. PRÉVIA -->
+    <section class="card" id="stepPreview" hidden>
+      <h2><span class="num">2</span> Prévia e posições</h2>
+
+      <!-- 16:9 -->
+      <div id="prevSplit" class="preview-split" data-only="16:9">
+        <div class="preview-main">
+          <canvas id="cvFrame"></canvas>
+        </div>
+        <div class="preview-side">
+          <label class="slider">
+            <span>Fim da tablatura <b id="lblTop">50%</b></span>
+            <input id="rngTop" type="range" min="10" max="90" step="0.5" value="50" />
+          </label>
+          <label class="slider">
+            <span>Início do violão <b id="lblBottom">50%</b></span>
+            <input id="rngBottom" type="range" min="10" max="90" step="0.5" value="50" />
+          </label>
+          <div class="mini-wrap">
+            <div><small>Parte 1 · Tablatura</small><canvas id="cvTab" class="mini"></canvas></div>
+            <div><small>Parte 2 · Violão</small><canvas id="cvGuitar" class="mini"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9:16 -->
+      <div id="prevVert" class="preview-v" data-only="9:16">
+        <canvas id="cvPrev"></canvas>
+        <div class="preview-side" id="vertHint">
+          <p class="hint">Fundo desfocado com as cores do próprio vídeo, vídeo central com cantos arredondados. Ajuste a altura dos textos abaixo.</p>
+        </div>
+      </div>
+
+      <video id="srcVideo" class="ghost-video" muted playsinline preload="auto"></video>
+      <div class="shared-controls">
+        <label class="slider">
+          <span>Quadro da prévia <b id="lblTime">0:00</b></span>
+          <input id="rngTime" type="range" min="0" max="1000" value="100" />
+        </label>
+        <label class="slider">
+          <span>Altura do título <b id="lblTitleY">36%</b></span>
+          <input id="rngTitleY" type="range" min="3" max="85" step="1" value="36" />
+        </label>
+        <label class="slider">
+          <span>Altura dos textos (CTA e final) <b id="lblCtaY">50%</b></span>
+          <input id="rngCtaY" type="range" min="10" max="95" step="1" value="50" />
+        </label>
+        <label class="check"><input type="checkbox" id="chkRound" checked /> Cantos arredondados <small class="hint" id="roundHint" style="margin:0"></small></label>
+        <p class="hint">Na prévia, título e textos aparecem juntos só para mostrar a posição; no vídeo, cada um entra no seu momento.</p>
+      </div>
+    </section>
+
+    <!-- 3. OPÇÕES -->
+    <section class="card" id="stepOptions" hidden>
+      <h2><span class="num">3</span> Saída, título e textos</h2>
+      <div class="row">
+        <label class="field">Resolução
+          <select id="selRes"></select>
+        </label>
+        <label class="field">Qualidade
+          <select id="selCrf">
+            <option value="26">Leve (arquivo menor)</option>
+            <option value="23" selected>Equilibrada</option>
+            <option value="20">Alta (arquivo maior)</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="check"><input type="checkbox" id="chkTitle" /> Mostrar título no início ("Hino N / Instrumento")</label>
+      <div class="row" style="margin-top:10px">
+        <label class="field">Título: aparece em (s)
+          <input id="inpTitleStart" type="number" min="0" step="0.5" value="0.5" />
+        </label>
+        <label class="field">Título: duração (s)
+          <input id="inpTitleDur" type="number" min="1" step="0.5" value="5" />
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="field">Texto final (últimos segundos)
+          <input id="inpFinal" type="text" list="dlFinal" maxlength="90" />
+        </label>
+        <label class="field">Texto final: duração (s)
+          <input id="inpFinalDur" type="number" min="2" step="0.5" value="4" />
+        </label>
+      </div>
+      <datalist id="dlFinal">
+        <option value="Quer tocar este hino? Baixe o aplicativo no link da Bio!"></option>
+        <option value="Baixe o aplicativo no link da Bio!"></option>
+        <option value="Toque este hino no app — link na Bio!"></option>
+        <option value="Baixe o aplicativo no link da descrição!"></option>
+        <option value="Aprenda a tocar! Baixe o app no link da Bio"></option>
+      </datalist>
+      <p class="hint">Apague o texto final para não mostrar o aviso.</p>
+
+      <h3>Chamadas para ação</h3>
+      <p class="hint" id="ctaHint">Tempos em segundos. Textos que começam depois do fim do vídeo são ignorados.</p>
+      <div id="ctaList" class="cta-list"></div>
+      <div class="actions">
+        <button id="btnAddCta" class="btn btn-ghost" type="button">+ Adicionar texto</button>
+        <button id="btnReset" class="btn btn-ghost" type="button">↺ Restaurar padrão deste formato</button>
+      </div>
+    </section>
+
+    <!-- 4. PROCESSAR -->
+    <section class="card" id="stepRun" hidden>
+      <h2><span class="num">4</span> Processar</h2>
+      <div class="actions">
+        <button id="btnRun" class="btn btn-primary">▶ Gerar vídeo</button>
+        <button id="btnCancel" class="btn btn-danger" hidden>✕ Cancelar</button>
+      </div>
+      <div class="progress" id="progressBox" hidden>
+        <div class="progress-head"><span id="phase">Aguardando…</span><b id="pct">0%</b></div>
+        <div class="bar"><div id="barFill"></div></div>
+      </div>
+      <details class="log"><summary>Detalhes técnicos</summary><pre id="logBox"></pre></details>
+    </section>
+
+    <!-- 5. RESULTADO -->
+    <section class="card" id="stepResult" hidden>
+      <h2><span class="num">5</span> Resultado</h2>
+      <video id="outVideo" controls playsinline style="margin:0 auto 12px;display:block;width:100%"></video>
+      <div class="actions">
+        <a id="btnDownload" class="btn btn-primary" download="hino.mp4">💾 Baixar MP4</a>
+        <button id="btnShare" class="btn btn-ghost" hidden>↗ Compartilhar</button>
+      </div>
+      <p id="outInfo" class="hint"></p>
+    </section>
+  </main>
+
+  <footer class="footer">Processamento local com FFmpeg.wasm · funciona offline depois da primeira carga · v1.0.0</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
